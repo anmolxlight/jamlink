@@ -1,8 +1,6 @@
 name: android-apk
 on:
   workflow_dispatch: {}
-  push:
-    paths: ['mobile/**', '.github/workflows/android.yml']
 jobs:
   build:
     runs-on: ubuntu-latest
