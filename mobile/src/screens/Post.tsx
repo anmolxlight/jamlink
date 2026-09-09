@@ -13,7 +13,8 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
   const [url, setUrl] = useState('');
   const [description, setDescription] = useState('');
   const [genre, setGenre] = useState<string>('pop');
-  const [errors, setErrors] = useState<{ title?: string; url?: string }>({});
+  const [touched, setTouched] = useState({ title: false, url: false });
+  const [tried, setTried] = useState(false);
   const [err, setErr] = useState('');
   const [gated, setGated] = useState(false);
   const [sending, setSending] = useState(false);
@@ -32,14 +33,21 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
     );
   }
 
+  // Same rule as web: errors are derived and only shown once a field has been
+  // left or the form has been submitted, so pristine fields are never red.
+  const titleErr = title.trim() ? '' : 'Give it a title so people know what is playing.';
+  const urlErr = !url.trim()
+    ? 'Paste the jam link you copied from Spotify.'
+    : isValidJamPost(url, title)
+      ? ''
+      : 'That is not a Spotify jam link. Use an open.spotify.com or spotify: link, or add a title.';
+  const showTitleErr = (touched.title || tried) && titleErr;
+  const showUrlErr = (touched.url || tried) && urlErr;
+
   async function submit() {
     setErr('');
-    const e: typeof errors = {};
-    if (!title.trim()) e.title = 'Title is required.';
-    else if (title.trim().length > TITLE_MAX) e.title = `Keep it under ${TITLE_MAX} chars.`;
-    if (!isValidJamPost(url, title)) e.url = 'Invalid Spotify link (need open.spotify.com or spotify: with /jam/, or any Spotify link + title).';
-    setErrors(e);
-    if (Object.keys(e).length) return;
+    setTried(true);
+    if (titleErr || urlErr) return;
     const sb = supabase();
     if (!sb) { setErr('Supabase not configured.'); return; }
     const { data: { user } } = await sb.auth.getUser();
@@ -56,16 +64,18 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
   return (
     <ScrollView style={{ flex: 1 }}>
       <Text style={styles.label}>Title</Text>
-      <TextInput value={title} onChangeText={setTitle} maxLength={TITLE_MAX} placeholder="Late-night lofi session"
+      <TextInput value={title} onChangeText={setTitle} maxLength={TITLE_MAX} placeholder="Late night lofi session"
+        onBlur={() => setTouched((t) => ({ ...t, title: true }))}
         placeholderTextColor={colors.muted} style={styles.input} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {errors.title ? <Text style={styles.error}>{errors.title}</Text> : <Text />}
+        {showTitleErr ? <Text style={styles.error}>{titleErr}</Text> : <Text />}
         <Text style={styles.muted}>{title.length}/{TITLE_MAX}</Text>
       </View>
       <Text style={styles.label}>Spotify Jam link</Text>
       <TextInput value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false}
-        placeholder="https://open.spotify.com/jam/…" placeholderTextColor={colors.muted} style={styles.input} />
-      {errors.url ? <Text style={styles.error}>{errors.url}</Text> : null}
+        onBlur={() => setTouched((t) => ({ ...t, url: true }))}
+        placeholder="https://open.spotify.com/jam/..." placeholderTextColor={colors.muted} style={styles.input} />
+      {showUrlErr ? <Text style={styles.error}>{urlErr}</Text> : null}
       <Text style={styles.label}>Description (optional)</Text>
       <TextInput value={description} onChangeText={setDescription} maxLength={DESC_MAX} multiline
         placeholder="What are we listening to?" placeholderTextColor={colors.muted} style={[styles.input, { minHeight: 64 }]} />
@@ -81,7 +91,7 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
       </View>
       <ErrorBanner message={err} />
       <TouchableOpacity onPress={submit} disabled={sending} style={[styles.bigButton, sending && { opacity: 0.6 }]}>
-        <Text style={styles.bigButtonText}>{sending ? 'Posting…' : 'Post jam'}</Text>
+        <Text style={styles.bigButtonText}>{sending ? 'Posting...' : 'Post jam'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

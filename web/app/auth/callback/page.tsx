@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase } from "@/lib/supabase";
+import { takeNext } from "@/lib/gate";
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -30,9 +31,13 @@ export default function AuthCallback() {
 
       // getSession waits for the client to finish its own URL detection, so if the
       // built-in PKCE handler already consumed the code we do not race it here.
+      // Where the user was headed before the gate stopped them, validated as an
+      // internal path by takeNext.
+      const next = takeNext(url.searchParams.get("next"));
+
       const { data: existing } = await sb.auth.getSession();
       if (existing.session) {
-        router.replace("/feed");
+        router.replace(next);
         return;
       }
 
@@ -47,7 +52,7 @@ export default function AuthCallback() {
         setError(exchangeError.message);
         return;
       }
-      router.replace("/feed");
+      router.replace(next);
     })();
   }, [router]);
 

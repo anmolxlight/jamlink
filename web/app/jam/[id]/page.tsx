@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getSupabase, type Jam } from "@/lib/supabase";
 import { parseJamId } from "@/lib/spotify";
+import { requireUser } from "@/lib/gate";
 import { timeAgo } from "@/lib/time";
 import { useToast } from "../../components/toast";
 
@@ -42,22 +43,17 @@ export default function JamDetail({ params }: { params: Promise<{ id: string }> 
 
   async function join() {
     setMsg("");
-    const sb = getSupabase();
-    if (!sb) {
-      setMsg("Supabase env not set.");
+    // One gate for every protected action. Logged out lands on the login page
+    // with this jam as the return path.
+    const auth = await requireUser(router, `/jam/${id}`);
+    if (!auth.ok) {
+      if (auth.reason === "no-env") setMsg("Supabase env not set.");
       return;
     }
+    const user = auth.user;
     setBusy(true);
-    const {
-      data: { user },
-    } = await sb.auth.getUser();
-    if (!user) {
-      setBusy(false);
-      router.push("/login");
-      return;
-    }
     // ponytail: RPC not a raw insert, so is_open / max_members / duplicate checks are enforced server side
-    const { error } = await sb.rpc("join_jam", { p_jam_id: id });
+    const { error } = await getSupabase()!.rpc("join_jam", { p_jam_id: id });
     setBusy(false);
     if (error) {
       setMsg(error.message);
