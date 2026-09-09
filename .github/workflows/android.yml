@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: npm, cache-dependency-path: mobile/package-lock.json }
+        with: { node-version: 22, cache: npm, cache-dependency-path: mobile/package-lock.json }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: 17 }
       - uses: android-actions/setup-android@v3
@@ -22,6 +22,6 @@ jobs:
       - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\n' >> android/gradle.properties
       - run: yes | sdkmanager --licenses
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - run: cd android && ./gradlew assembleDebug -x lint
+      - run: cd android && ./gradlew assembleDebug -x lint --stacktrace
       - uses: actions/upload-artifact@v4
         with: { name: JamLink-apk, path: mobile/android/app/build/outputs/apk/debug/app-debug.apk }
