@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./components/toast";
 import { SiteNav } from "./components/nav";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const display = Space_Grotesk({ subsets: ["latin"], variable: "--font-display" });
 
 const site = "JamLink";
 const desc = "Find an open Spotify jam by genre and join in one tap.";
@@ -32,37 +31,71 @@ export const metadata: Metadata = {
   },
 };
 
-const FOOT_LINK = "shrink-0 transition hover:text-neutral-200";
+const FOOT_LINK = "transition hover:text-neutral-100";
+
+const FOOT_COLS = [
+  {
+    head: "Listen",
+    links: [
+      { href: "/feed", label: "Explore" },
+      { href: "/trending", label: "Trending" },
+      { href: "/#genres", label: "Genres" },
+      { href: "/search", label: "Search" },
+    ],
+  },
+  {
+    head: "Host",
+    links: [
+      { href: "/new", label: "Post a Jam" },
+      { href: "/my-jams", label: "My Jams" },
+      { href: "/profile", label: "Profile" },
+      { href: "/login", label: "Log in" },
+    ],
+  },
+];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${geist.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen bg-neutral-950 font-[family-name:var(--font-geist)] text-neutral-100 antialiased">
+    <html lang="en" className={`dark ${display.variable}`}>
+      <body className="min-h-screen bg-[#0a0a0a] font-[family-name:var(--font-display)] text-neutral-100 antialiased">
         <ToastProvider>
           <SiteNav />
-          <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-          <footer className="mt-16 border-t border-neutral-800">
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-6 text-xs text-neutral-400">
-              <span className="font-semibold text-neutral-200">JamLink</span>
-              <Link href="/feed" className={FOOT_LINK}>
-                Explore
-              </Link>
-              <Link href="/trending" className={FOOT_LINK}>
-                Trending
-              </Link>
-              <Link href="/#genres" className={FOOT_LINK}>
-                Genres
-              </Link>
-              <Link href="/new" className={FOOT_LINK}>
-                Post a Jam
-              </Link>
+          {/* The homepage opts out of this shell with data-bleed (see globals.css). */}
+          <main className="mx-auto w-full max-w-5xl overflow-x-hidden px-4 pt-28 pb-6">{children}</main>
+          <footer className="border-t border-white/10 bg-[#0a0a0a]">
+            <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 px-6 py-16 text-sm text-neutral-400 md:grid-cols-4">
+              <div className="col-span-2 md:col-span-2">
+                <Link href="/" className="text-2xl font-bold tracking-tight text-neutral-100">
+                  Jam<span className="text-[#1DB954]">Link</span>
+                </Link>
+                <p className="mt-3 max-w-xs text-neutral-500">
+                  Open Spotify listening rooms, sorted by genre, open to anyone who finds them.
+                </p>
+              </div>
+              {FOOT_COLS.map((c) => (
+                <div key={c.head}>
+                  <p className="font-semibold text-neutral-200">{c.head}</p>
+                  <ul className="mt-4 space-y-2.5">
+                    {c.links.map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} className={FOOT_LINK}>
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 px-6 py-6 text-xs text-neutral-600">
+              <span>JamLink is not affiliated with Spotify.</span>
               <a
                 href="https://open.spotify.com"
                 target="_blank"
                 rel="noreferrer"
                 className={`${FOOT_LINK} sm:ml-auto`}
               >
-                Spotify
+                Open Spotify
               </a>
             </div>
           </footer>

@@ -10,6 +10,33 @@ body {
   color: #ededed;
 }
 
+/* The homepage is full bleed. Every other route keeps the shared max-width shell,
+   so one rule beats adding a container to nine route files. */
+main:has([data-bleed]) {
+  max-width: none;
+  padding: 0;
+}
+
+/* Film grain over the hero. Inline turbulence, no image request. */
+.jl-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Infinite genre marquee. Track is duplicated in the DOM, so -50% loops seamlessly. */
+@keyframes jl-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.jl-marquee {
+  animation: jl-marquee 38s linear infinite;
+}
+
 /* Focus visible ring, single accent */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -94,7 +121,7 @@ button:active, a:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .jl-skeleton, .jl-insert, .jl-enter, .jl-rank, .jl-eq i {
+  .jl-skeleton, .jl-insert, .jl-enter, .jl-rank, .jl-eq i, .jl-marquee {
     animation: none;
   }
   .jl-enter, .jl-rank {
