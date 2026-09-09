@@ -5,8 +5,13 @@
     "version": "0.1.0",
     "entryPoint": "./App.tsx",
     "scheme": "jamlink",
+    "icon": "./assets/icon.png",
     "android": {
-      "package": "com.jamlink.app"
+      "package": "com.jamlink.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0a0a"
+      }
     },
     "extra": {
       "eas": {
