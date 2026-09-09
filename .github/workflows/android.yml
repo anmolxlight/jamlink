@@ -19,7 +19,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - run: npm ci
       - run: npx expo prebuild --platform android --non-interactive
-      - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\n' >> android/gradle.properties
+      - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
       - run: yes | sdkmanager --licenses
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - run: cd android && ./gradlew assembleDebug -x lint --stacktrace
