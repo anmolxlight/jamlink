@@ -5,7 +5,9 @@
   "main": "App.tsx",
   "scripts": {
     "start": "expo start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

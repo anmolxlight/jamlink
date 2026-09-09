@@ -3,6 +3,8 @@
     "name": "JamLink",
     "slug": "jamlink",
     "version": "0.1.0",
-    "entryPoint": "./App.tsx"
+    "entryPoint": "./App.tsx",
+    "scheme": "jamlink",
+    "android": { "package": "com.jamlink.app" }
   }
 }
