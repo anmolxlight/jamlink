@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --accent: #1db954;
+}
+
+body {
+  background: #0a0a0a;
+  color: #ededed;
+}
+
+/* Focus visible ring, single accent */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Tactile base for buttons/links handled per-class too */
+button:active, a:active {
+  transform: scale(0.98);
+}
+
+/* Skeleton shimmer matching card shape */
+@keyframes jl-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.jl-skeleton {
+  background: linear-gradient(90deg, #171717 25%, #232323 37%, #171717 63%);
+  background-size: 800px 100%;
+  animation: jl-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Realtime insert animation */
+@keyframes jl-insert {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.jl-insert {
+  animation: jl-insert 0.3s ease-out;
+}
+
+/* Staggered card entry. Index comes from --i (capped by caller). */
+@keyframes jl-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.jl-enter {
+  animation: jl-enter 0.32s ease-out both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Equalizer bar motif: 4 bars, accent, pure CSS */
+.jl-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.jl-eq i {
+  display: block;
+  width: 3px;
+  height: 30%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: jl-eq 900ms ease-in-out infinite alternate;
+}
+.jl-eq i:nth-child(1) { animation-delay: 0ms; }
+.jl-eq i:nth-child(2) { animation-delay: 150ms; }
+.jl-eq i:nth-child(3) { animation-delay: 300ms; }
+.jl-eq i:nth-child(4) { animation-delay: 450ms; }
+@keyframes jl-eq {
+  from { height: 25%; }
+  to { height: 100%; }
+}
+/* Closed / idle jams get flat bars */
+.jl-eq[data-idle="true"] i {
+  animation: none;
+  height: 30%;
+  background: #525252;
+}
+
+/* Trending rank rows slide in from the left */
+@keyframes jl-rank {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.jl-rank {
+  animation: jl-rank 0.35s ease-out both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jl-skeleton, .jl-insert, .jl-enter, .jl-rank, .jl-eq i {
+    animation: none;
+  }
+  .jl-enter, .jl-rank {
+    opacity: 1;
+    transform: none;
+  }
+  .jl-eq i {
+    height: 60%;
+  }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
