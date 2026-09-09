@@ -5,6 +5,14 @@
     "version": "0.1.0",
     "entryPoint": "./App.tsx",
     "scheme": "jamlink",
-    "android": { "package": "com.jamlink.app" }
+    "android": {
+      "package": "com.jamlink.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6fb6faa8-609e-439d-a3a9-33e00f6d854c"
+      }
+    },
+    "owner": "huhyffijns-team"
   }
 }
