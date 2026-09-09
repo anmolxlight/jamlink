@@ -4,7 +4,7 @@ import { isConfigured, supabase, type Jam } from '../lib/supabase';
 import { colors, spacing, styles, timeAgo } from '../theme';
 import { EmptyState, ErrorBanner, SkeletonRow } from '../ui';
 
-export default function Profile({ onOpen, onLogin }: { onOpen: (id: string) => void; onLogin: () => void }) {
+export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: string) => void; onLogin: () => void; onPost: () => void }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [hosted, setHosted] = useState<Jam[]>([]);
   const [joined, setJoined] = useState<Jam[]>([]);
@@ -123,7 +123,7 @@ export default function Profile({ onOpen, onLogin }: { onOpen: (id: string) => v
 
       <Text style={styles.sectionTitle}>Hosting</Text>
       {hosted.length === 0 ? (
-        <Text style={styles.muted}>You have not posted a jam yet.</Text>
+        <EmptyState message="You have not posted a jam yet." actionLabel="Post a jam" onAction={onPost} />
       ) : (
         hosted.map((j) => {
           const key = `${j.is_open ? 'close_jam' : 'reopen_jam'}:${j.id}`;
@@ -154,7 +154,7 @@ export default function Profile({ onOpen, onLogin }: { onOpen: (id: string) => v
 
       <Text style={styles.sectionTitle}>Joined</Text>
       {joined.length === 0 ? (
-        <Text style={styles.muted}>You have not joined a jam yet.</Text>
+        <EmptyState message="You have not joined a jam yet. Post one and listeners can join you." actionLabel="Post a jam" onAction={onPost} />
       ) : (
         joined.map((j) => {
           const pending = busy === `leave:${j.id}`;

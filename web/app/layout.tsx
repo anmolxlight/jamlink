@@ -42,8 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteNav />
           <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
           <footer className="mt-16 border-t border-neutral-800">
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-6 text-xs text-neutral-500">
-              <span className="font-semibold text-neutral-400">JamLink</span>
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-6 text-xs text-neutral-400">
+              <span className="font-semibold text-neutral-200">JamLink</span>
               <Link href="/feed" className={FOOT_LINK}>
                 Explore
               </Link>

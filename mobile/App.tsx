@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SafeAreaView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import Feed from './src/screens/Feed';
 import JamDetail from './src/screens/JamDetail';
 import Login from './src/screens/Login';
@@ -28,7 +28,15 @@ export default function App() {
     const sb = supabase();
     if (!sb) return;
     const { data } = await sb.from('jams').select('id').eq('is_open', true).limit(100);
-    if (data?.length) setDetailId((data as { id: string }[])[Math.floor(Math.random() * data.length)].id);
+    // ponytail: guard here, not in Feed, so every caller of random() gets the same honest answer
+    if (!data?.length) {
+      Alert.alert('No open jams yet', 'Nothing is running right now. Post the first one.', [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Post a jam', onPress: () => goTab('post') },
+      ]);
+      return;
+    }
+    setDetailId((data as { id: string }[])[Math.floor(Math.random() * data.length)].id);
   }
 
   function goTab(t: Tab) {
@@ -67,13 +75,13 @@ export default function App() {
         ) : detailId ? (
           <JamDetail id={detailId} />
         ) : tab === 'feed' ? (
-          <Feed onOpen={setDetailId} onRandom={random} />
+          <Feed onOpen={setDetailId} onRandom={random} onPost={() => goTab('post')} />
         ) : tab === 'search' ? (
-          <Search onOpen={setDetailId} />
+          <Search onOpen={setDetailId} onPost={() => goTab('post')} />
         ) : tab === 'post' ? (
           <Post onDone={setDetailId} onLogin={() => setShowLogin(true)} />
         ) : (
-          <Profile onOpen={setDetailId} onLogin={() => setShowLogin(true)} />
+          <Profile onOpen={setDetailId} onLogin={() => setShowLogin(true)} onPost={() => goTab('post')} />
         )}
       </View>
       <View style={styles.tabBar}>

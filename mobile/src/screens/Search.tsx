@@ -4,7 +4,7 @@ import { isConfigured, supabase, type Jam } from '../lib/supabase';
 import { colors, spacing, styles, timeAgo } from '../theme';
 import { EmptyState, ErrorBanner, SkeletonRow } from '../ui';
 
-export default function Search({ onOpen }: { onOpen: (id: string) => void }) {
+export default function Search({ onOpen, onPost }: { onOpen: (id: string) => void; onPost: () => void }) {
   const [term, setTerm] = useState('');
   const [results, setResults] = useState<Jam[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,11 +47,11 @@ export default function Search({ onOpen }: { onOpen: (id: string) => void }) {
       />
       <ErrorBanner message={err} />
       {!q ? (
-        <EmptyState message="Type a jam title to search open jams." />
+        <EmptyState message="Type a jam title to search open jams." actionLabel="Post a jam" onAction={onPost} />
       ) : loading ? (
         <View style={{ marginTop: spacing.md }}>{[0, 1, 2].map((i) => <SkeletonRow key={i} />)}</View>
       ) : results.length === 0 ? (
-        <EmptyState message={`No open jams match "${q}".`} />
+        <EmptyState message={`No open jams match "${q}". Post it yourself and it shows up here.`} actionLabel="Post a jam" onAction={onPost} />
       ) : (
         <View style={{ marginTop: spacing.md }}>
           {results.map((j) => (

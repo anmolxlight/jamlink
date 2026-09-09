@@ -6,7 +6,7 @@ import { rankTrending } from '../lib/trending';
 import { colors, spacing, styles, timeAgo } from '../theme';
 import { EmptyState, ErrorBanner, SkeletonRow } from '../ui';
 
-export default function Feed({ onOpen, onRandom }: { onOpen: (id: string) => void; onRandom: () => void }) {
+export default function Feed({ onOpen, onRandom, onPost }: { onOpen: (id: string) => void; onRandom: () => void; onPost: () => void }) {
   const [genre, setGenre] = useState<string | null>(null);
   const [all, setAll] = useState<Jam[]>([]);
   const [err, setErr] = useState('');
@@ -98,7 +98,11 @@ export default function Feed({ onOpen, onRandom }: { onOpen: (id: string) => voi
       {loading ? (
         <View>{[0, 1, 2, 3].map((i) => <SkeletonRow key={i} />)}</View>
       ) : shown.length === 0 ? (
-        <EmptyState message={genre ? `No open jams in ${genre} yet.` : 'No open jams yet. Be the first to post one!'} />
+        <EmptyState
+          message={genre ? `No open jams in ${genre} yet. Post one and it lands at the top.` : 'No open jams yet. The first jam posted here is the one everyone sees.'}
+          actionLabel="Post a jam"
+          onAction={onPost}
+        />
       ) : (
         <View>
           {shown.map((item) => (

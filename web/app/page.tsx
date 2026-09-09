@@ -52,7 +52,7 @@ export default function Home() {
       <section>
         <div className="flex items-center gap-3">
           <Equalizer />
-          <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          <span className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
             Listen together on Spotify
           </span>
         </div>
@@ -115,7 +115,8 @@ export default function Home() {
             <p className="mx-auto mt-1 max-w-sm text-sm text-neutral-400">
               JamLink is brand new. The first jam posted here is the one everyone sees.
             </p>
-            <Link href="/new" className={`${CTA} mt-5`}>
+            {/* Secondary weight on purpose: the hero already owns the one primary button. */}
+            <Link href="/new" className={`${CTA_SECONDARY} mt-5`}>
               Post the first jam
             </Link>
           </div>
@@ -129,7 +130,7 @@ export default function Home() {
                 <span
                   aria-hidden
                   className={`w-6 shrink-0 text-right text-lg font-bold tabular-nums ${
-                    i < 3 ? "text-[#1DB954]" : "text-neutral-500"
+                    i < 3 ? "text-[#1DB954]" : "text-neutral-400"
                   }`}
                 >
                   {i + 1}
