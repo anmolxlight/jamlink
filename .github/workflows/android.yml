@@ -20,7 +20,7 @@ jobs:
       # KGP resolves to 1.9.24 (react-native-gradle-plugin pins it), but the expo
       # template's ext.kotlinVersion=1.9.25 picks Compose compiler 1.5.15, which
       # hard-errors on a 1.9.24 compiler. Pin ext to what the compiler actually is.
-      - run: printf '\nandroid.kotlinVersion=1.9.24\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\nkotlin.compiler.execution.strategy=in-process\n' >> android/gradle.properties
+      - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\nkotlin.compiler.execution.strategy=in-process\nandroid.kotlinVersion=1.9.24\nbundleInDebug=true\n' >> android/gradle.properties
       - run: yes | sdkmanager --licenses
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - run: cd android && ./gradlew assembleDebug -x lint --stacktrace
