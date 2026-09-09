@@ -23,6 +23,12 @@ jobs:
       - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\nkotlin.compiler.execution.strategy=in-process\nandroid.kotlinVersion=1.9.24\nbundleInDebug=true\n' >> android/gradle.properties
       - run: yes | sdkmanager --licenses
       - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
-      - run: cd android && ./gradlew assembleDebug -x lint --stacktrace
+      - run: keytool -genkey -keystore $GITHUB_WORKSPACE/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=JamLink"
+      - run: cd android && ./gradlew assembleRelease -x lint --stacktrace
+        env:
+          ORG_GRADLE_PROJECT_android_injected_signing_store_file: ${{ github.workspace }}/debug.keystore
+          ORG_GRADLE_PROJECT_android_injected_signing_store_password: android
+          ORG_GRADLE_PROJECT_android_injected_signing_key_alias: androiddebugkey
+          ORG_GRADLE_PROJECT_android_injected_signing_key_password: android
       - uses: actions/upload-artifact@v4
-        with: { name: JamLink-apk, path: mobile/android/app/build/outputs/apk/debug/app-debug.apk }
+        with: { name: JamLink-apk, path: mobile/android/app/build/outputs/apk/release/app-release.apk }
