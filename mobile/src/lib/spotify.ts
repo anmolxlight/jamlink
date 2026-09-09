@@ -24,9 +24,9 @@ export function isValidJamPost(url: string, title: string): boolean {
   return title.trim().length > 0; // non-jam spotify link requires explicit title
 }
 
-// ponytail: runnable check, npx tsx src/lib/spotify.ts
-if (typeof require !== 'undefined' && require.main === module) {
-  const assert = require('assert');
+// ponytail: runnable check, npx tsx src/lib/spotify.ts (node-free assert: Metro must bundle this file)
+if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
+  const assert = { deepStrictEqual(a: unknown, b: unknown) { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error('assert failed'); }, strictEqual(a: unknown, b: unknown) { if (a !== b) throw new Error('assert failed'); } };
   assert.deepStrictEqual(parseJamLink('https://open.spotify.com/jam/abc123'), { jamId: 'abc123', valid: true });
   assert.strictEqual(parseJamLink('https://google.com/x').valid, false);
   assert.strictEqual(isValidJamPost('https://open.spotify.com/track/xyz', ''), false);

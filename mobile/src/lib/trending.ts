@@ -7,9 +7,9 @@ export function rankTrending<T extends Pick<Jam, 'member_count' | 'created_at'>>
     .slice(0, limit);
 }
 
-// ponytail: runnable check, npx tsx src/lib/trending.ts
-if (typeof require !== 'undefined' && require.main === module) {
-  const assert = require('assert');
+// ponytail: runnable check, npx tsx src/lib/trending.ts (node-free assert: Metro must bundle this file)
+if (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) {
+  const assert = { deepStrictEqual(a: unknown, b: unknown) { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error('assert failed'); }, strictEqual(a: unknown, b: unknown) { if (a !== b) throw new Error('assert failed'); } };
   const j = (member_count: number, created_at: string) => ({ member_count, created_at });
   assert.deepStrictEqual(
     rankTrending([j(1, '2024-01-01T00:00:00Z'), j(5, '2024-01-01T00:00:00Z')]),
