@@ -7,7 +7,7 @@ import Post from './src/screens/Post';
 import Profile from './src/screens/Profile';
 import Search from './src/screens/Search';
 import { supabase } from './src/lib/supabase';
-import { colors, spacing, styles } from './src/theme';
+import { colors, styles, typo } from './src/theme';
 
 type Tab = 'feed' | 'search' | 'post' | 'profile';
 
@@ -55,21 +55,27 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <StatusBar barStyle="light-content" />
-      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md }}>
-        <Text style={styles.title}>JamLink</Text>
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      {/* minimal split nav: wordmark left, the single live control right */}
+      <View style={styles.nav}>
+        <View style={styles.row}>
+          <View style={styles.navDot} />
+          <Text style={typo.wordmark}>JAMLINK</Text>
+        </View>
         {overlay ? (
           <TouchableOpacity
             onPress={back}
             accessibilityRole="button"
             accessibilityLabel={`Back to ${tabLabel}`}
-            style={styles.backButton}>
-            <Text style={styles.backText}>{`← Back to ${tabLabel}`}</Text>
+            style={styles.backPill}>
+            <Text style={[styles.backText, { color: colors.accent }]}>{'‹  '}</Text>
+            <Text style={styles.backText}>{tabLabel}</Text>
           </TouchableOpacity>
         ) : null}
       </View>
-      {/* ponytail: no outer ScrollView, each screen owns its scroll + refresh */}
-      <View style={{ flex: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.md }}>
+      {/* ponytail: no outer ScrollView and no outer padding, each screen owns its
+          scroll, its refresh, and its own full-bleed edges */}
+      <View style={{ flex: 1 }}>
         {showLogin ? (
           <Login onDone={() => setShowLogin(false)} />
         ) : detailId ? (
@@ -84,23 +90,24 @@ export default function App() {
           <Profile onOpen={setDetailId} onLogin={() => setShowLogin(true)} onPost={() => goTab('post')} />
         )}
       </View>
-      <View style={styles.tabBar}>
-        {TABS.map((t) => {
-          const selected = !overlay && tab === t.key;
-          return (
-            <TouchableOpacity
-              key={t.key}
-              onPress={() => goTab(t.key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              accessibilityLabel={`${t.label} tab`}
-              style={styles.tabItem}>
-              <Text style={[styles.tabLabel, { color: selected ? colors.accent : colors.muted, fontWeight: selected ? 'bold' : 'normal' }]}>
-                {t.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.dock}>
+        <View style={styles.dockPill}>
+          {TABS.map((t) => {
+            const selected = !overlay && tab === t.key;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                onPress={() => goTab(t.key)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`${t.label} tab`}
+                style={[styles.tabItem, selected && styles.tabItemOn]}>
+                <Text style={[styles.tabLabel, selected && styles.tabLabelOn]}>{t.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
     </SafeAreaView>
   );

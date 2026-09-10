@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TextInput, View } from 'react-native';
+import { seedFor } from '../lib/layout';
 import { isConfigured, supabase, type Jam } from '../lib/supabase';
-import { colors, spacing, styles, timeAgo } from '../theme';
-import { EmptyState, ErrorBanner, SkeletonRow } from '../ui';
+import { colors, gutter, spacing, styles, timeAgo, typo } from '../theme';
+import { Cover, EmptyState, ErrorBanner, JamRow, Reveal, SkeletonRow } from '../ui';
 
 export default function Search({ onOpen, onPost }: { onOpen: (id: string) => void; onPost: () => void }) {
   const [term, setTerm] = useState('');
+  const [focused, setFocused] = useState(false);
   const [results, setResults] = useState<Jam[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
@@ -31,42 +33,83 @@ export default function Search({ onOpen, onPost }: { onOpen: (id: string) => voi
     return () => { cancelled = true; clearTimeout(t); };
   }, [q]);
 
-  if (!isConfigured) return <EmptyState message="Set EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY to browse jams." />;
+  if (!isConfigured) {
+    return (
+      <View style={styles.gutter}>
+        <EmptyState
+          title="Not wired up yet"
+          message="Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY, then reopen the app to browse jams."
+          seed="jamlink-offline-static"
+        />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled">
-      <TextInput
-        value={term}
-        onChangeText={setTerm}
-        autoCapitalize="none"
-        autoCorrect={false}
-        accessibilityLabel="Search jams by title"
-        placeholder="Search jams by title"
-        placeholderTextColor={colors.muted}
-        style={[styles.input, { marginTop: spacing.md }]}
-      />
-      <ErrorBanner message={err} />
-      {!q ? (
-        <EmptyState message="Type a jam title to search open jams." actionLabel="Post a jam" onAction={onPost} />
-      ) : loading ? (
-        <View style={{ marginTop: spacing.md }}>{[0, 1, 2].map((i) => <SkeletonRow key={i} />)}</View>
-      ) : results.length === 0 ? (
-        <EmptyState message={`No open jams match "${q}". Post it yourself and it shows up here.`} actionLabel="Post a jam" onAction={onPost} />
-      ) : (
-        <View style={{ marginTop: spacing.md }}>
-          {results.map((j) => (
-            <TouchableOpacity
-              key={j.id}
-              onPress={() => onOpen(j.id)}
-              accessibilityRole="button"
-              accessibilityLabel={`${j.title}, ${j.member_count} members`}
-              style={styles.card}>
-              <Text style={{ color: colors.text, fontWeight: 'bold' }}>{j.title}</Text>
-              <Text style={styles.muted}>{j.genre} · {j.member_count} members · {timeAgo(j.created_at)}</Text>
-            </TouchableOpacity>
-          ))}
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled">
+      <Cover seed="jamlink-search-vinyl-wall" height={180}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
+          <Reveal>
+            <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
+              Find the room
+            </Text>
+          </Reveal>
         </View>
-      )}
+      </Cover>
+
+      <View style={[styles.gutter, { marginTop: spacing.xl }]}>
+        <TextInput
+          value={term}
+          onChangeText={setTerm}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+          accessibilityLabel="Search jams by title"
+          placeholder="Search by title"
+          placeholderTextColor={colors.dim}
+          style={[styles.field, focused && styles.fieldOn]}
+        />
+        <ErrorBanner message={err} />
+
+        {!q ? (
+          <EmptyState
+            title="Type a title"
+            message="Search runs across every open jam. Nothing here yet that matches what you want to hear? Post it."
+            actionLabel="Post a jam"
+            onAction={onPost}
+            seed="jamlink-search-empty-room"
+          />
+        ) : loading ? (
+          <View style={{ marginTop: spacing.lg }}>{[0, 1, 2].map((i) => <SkeletonRow key={i} />)}</View>
+        ) : results.length === 0 ? (
+          <EmptyState
+            title="No match"
+            message={`No open jams match "${q}". Post it yourself and it shows up here for everyone else searching the same thing.`}
+            actionLabel="Post a jam"
+            onAction={onPost}
+            seed={seedFor('search-miss', q)}
+          />
+        ) : (
+          <View style={{ marginTop: spacing.lg }}>
+            <Text style={[typo.eyebrow, { marginBottom: spacing.sm }]}>{`${results.length} OPEN JAM${results.length === 1 ? '' : 'S'}`}</Text>
+            <View style={styles.hairline} />
+            {results.map((j, i) => (
+              <Reveal key={j.id} delay={Math.min(i, 6) * 45}>
+                <JamRow
+                  seed={seedFor(j.genre, j.id)}
+                  title={j.title}
+                  meta={`${j.genre} · ${j.member_count} listening · ${timeAgo(j.created_at)}`}
+                  onPress={() => onOpen(j.id)}
+                  accessibilityLabel={`${j.title}, ${j.member_count} members`}
+                  last={i === results.length - 1}
+                />
+              </Reveal>
+            ))}
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }

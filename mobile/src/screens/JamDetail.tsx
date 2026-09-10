@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, Text, View } from 'react-native';
+import { seedFor } from '../lib/layout';
 import { supabase, type Jam } from '../lib/supabase';
-import { colors, spacing, styles } from '../theme';
-import { EmptyState, ErrorBanner } from '../ui';
+import { colors, gutter, radius, spacing, styles, timeAgo, typo } from '../theme';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, Reveal, SkeletonBlock, SkeletonRow, Solid } from '../ui';
 
 type Member = { user_id: string; joined_at: string };
 
@@ -28,6 +29,8 @@ export default function JamDetail({ id }: { id: string }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [joined, setJoined] = useState(false);
   const [msg, setMsg] = useState('');
+  // ponytail: one flag, so a success line never renders inside the error banner
+  const [ok, setOk] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,16 +50,19 @@ export default function JamDetail({ id }: { id: string }) {
     })();
   }, [id]);
 
+  function fail(m: string) { setOk(false); setMsg(m); }
+
   async function toggleJoin() {
     const sb = supabase();
     if (!sb || !jam) return;
     setMsg('');
+    setOk(false);
     const { data: { user } } = await sb.auth.getUser();
-    if (!user) { setMsg('Login required to join.'); return; }
+    if (!user) { fail('Login required to join.'); return; }
     // ponytail: RPCs not raw writes, so is_open / max_members / duplicate checks are enforced server side
     if (joined) {
       const { error } = await sb.rpc('leave_jam', { p_jam_id: jam.id });
-      if (error) setMsg(error.message);
+      if (error) fail(error.message);
       else {
         setJoined(false);
         setMembers((m) => m.filter((x) => x.user_id !== user.id));
@@ -64,43 +70,103 @@ export default function JamDetail({ id }: { id: string }) {
       }
     } else {
       const { error } = await sb.rpc('join_jam', { p_jam_id: jam.id });
-      if (error) setMsg(error.message);
+      if (error) fail(error.message);
       else {
         setJoined(true);
         setMembers((m) => [...m, { user_id: user.id, joined_at: new Date().toISOString() }]);
         setJam((j) => (j ? { ...j, member_count: j.member_count + 1 } : j));
-        setMsg('Joined! Open Spotify to listen.');
+        setOk(true);
+        setMsg('You are in. Open Spotify to hear it.');
       }
     }
   }
 
-  if (loading) return <Text style={styles.muted}>Loading…</Text>;
-  if (!jam) return <View><ErrorBanner message={msg} /><EmptyState message="Jam not found." /></View>;
+  if (loading) {
+    return (
+      <View>
+        <SkeletonBlock height={280} style={{ borderRadius: 0 }} />
+        <View style={styles.gutter}>{[0, 1].map((i) => <SkeletonRow key={i} />)}</View>
+      </View>
+    );
+  }
+
+  if (!jam) {
+    return (
+      <View style={styles.gutter}>
+        <ErrorBanner message={ok ? '' : msg} />
+        <EmptyState title="Jam not found" message="This room is gone, or the link points at nothing. Head back and pick another." seed="jamlink-lost-signal" />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={{ flex: 1 }}>
-      <Text style={styles.title}>{jam.title}</Text>
-      <Text style={[styles.muted, { marginTop: spacing.xs }]}>{jam.genre} · {jam.member_count} members</Text>
-      {jam.description ? <Text style={[styles.body, { marginTop: spacing.sm }]}>{jam.description}</Text> : null}
-      {!jam.is_open ? (
-        <View><ErrorBanner message="This jam is closed." /></View>
-      ) : (
-        <TouchableOpacity onPress={toggleJoin} style={styles.bigButton}>
-          <Text style={styles.bigButtonText}>{joined ? 'Leave jam' : 'Join jam'}</Text>
-        </TouchableOpacity>
-      )}
-      <TouchableOpacity onPress={() => openInSpotify(jam.spotify_url, setMsg)} style={{ marginVertical: spacing.sm }}>
-        <Text style={{ color: colors.accent, fontWeight: 'bold' }}>Open in Spotify ↗</Text>
-      </TouchableOpacity>
-      <ErrorBanner message={msg} />
-      <Text style={[styles.label, { marginBottom: spacing.sm }]}>Members ({members.length})</Text>
-      {members.length === 0 ? (
-        <Text style={styles.muted}>No members yet.</Text>
-      ) : (
-        members.map((m) => (
-          <Text key={m.user_id} style={styles.muted}>• {m.user_id.slice(0, 8)}…</Text>
-        ))
-      )}
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }}>
+      <Cover seed={seedFor(jam.genre, jam.id)} height={300} dim={0.34}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.xl }}>
+          <Reveal>
+            <Eyebrow>{`${jam.genre}  ${jam.is_open ? 'open' : 'closed'}`}</Eyebrow>
+            <Text style={[typo.display, { marginTop: spacing.sm }]} numberOfLines={3} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {jam.title}
+            </Text>
+            <Text style={[typo.muted, { marginTop: spacing.sm }]}>
+              {jam.member_count} listening · started {timeAgo(jam.created_at)}
+            </Text>
+          </Reveal>
+        </View>
+      </Cover>
+
+      <View style={styles.gutter}>
+        {jam.description ? (
+          <Reveal delay={90}>
+            <Text style={[typo.body, { marginTop: spacing.xl }]}>{jam.description}</Text>
+          </Reveal>
+        ) : null}
+
+        {jam.is_open ? (
+          <Solid label={joined ? 'Leave jam' : 'Join jam'} onPress={toggleJoin} style={{ marginTop: spacing.xl }} />
+        ) : (
+          <View style={[styles.card, { marginTop: spacing.xl, padding: spacing.lg }]}>
+            <Eyebrow>Closed</Eyebrow>
+            <Text style={[typo.muted, { marginTop: spacing.xs }]}>The host closed this room, so joining is off. The link may still play.</Text>
+          </View>
+        )}
+
+        <Ghost label="Open in Spotify" onPress={() => openInSpotify(jam.spotify_url, fail)} style={{ marginTop: spacing.md }} />
+
+        {ok && msg ? (
+          <Reveal style={[styles.card, { marginTop: spacing.lg, padding: spacing.lg, borderColor: colors.accent }]}>
+            <Text style={typo.body}>{msg}</Text>
+          </Reveal>
+        ) : (
+          <ErrorBanner message={msg} />
+        )}
+
+        <View style={{ marginTop: spacing.section }}>
+          <View style={styles.rowBetween}>
+            <Text style={typo.h1}>In the room</Text>
+            <Text style={typo.micro}>{members.length}</Text>
+          </View>
+          <View style={[styles.hairline, { marginTop: spacing.md, marginBottom: spacing.lg }]} />
+          {members.length === 0 ? (
+            <Text style={typo.muted}>Nobody yet. Join first and the rest follow the crowd.</Text>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+              {members.map((m) => (
+                <View
+                  key={m.user_id}
+                  accessibilityLabel={`Listener ${m.user_id.slice(0, 4)}`}
+                  style={{
+                    width: 46, height: 46, borderRadius: radius.pill, marginRight: spacing.sm, marginBottom: spacing.sm,
+                    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.line,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                  <Text style={[typo.h3, { color: colors.muted }]}>{m.user_id.slice(0, 2).toUpperCase()}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      </View>
     </ScrollView>
   );
 }

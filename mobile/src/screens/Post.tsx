@@ -1,12 +1,46 @@
 import { useEffect, useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
+import { ScrollView, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { GENRES, isValidJamPost } from '../lib/spotify';
 import { supabase } from '../lib/supabase';
-import { colors, spacing, styles } from '../theme';
-import { EmptyState, ErrorBanner } from '../ui';
+import { colors, gutter, spacing, styles, typo } from '../theme';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Press, Reveal, Solid } from '../ui';
 
 const TITLE_MAX = 80;
 const DESC_MAX = 280;
+
+// ponytail: one field shape, used three times. Owns its own focus underline so the
+// screen does not carry three booleans.
+function Field({ label, value, onChangeText, placeholder, error, onBlur, maxLength, multiline, keyboardType, sentences }: {
+  label: string; value: string; onChangeText: (v: string) => void; placeholder: string;
+  error?: string | false; onBlur?: () => void; maxLength?: number; multiline?: boolean;
+  keyboardType?: KeyboardTypeOptions; sentences?: boolean;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={{ marginTop: spacing.xxl }}>
+      <Eyebrow>{label}</Eyebrow>
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.dim}
+        maxLength={maxLength}
+        multiline={multiline}
+        keyboardType={keyboardType}
+        autoCapitalize={sentences ? 'sentences' : 'none'}
+        autoCorrect={Boolean(sentences)}
+        accessibilityLabel={label}
+        onFocus={() => setFocused(true)}
+        onBlur={() => { setFocused(false); onBlur?.(); }}
+        style={[styles.field, focused && styles.fieldOn, multiline && { minHeight: 76, textAlignVertical: 'top' }]}
+      />
+      <View style={[styles.rowBetween, { marginTop: spacing.xs }]}>
+        {error ? <Text style={[styles.error, { flex: 1, marginRight: spacing.md }]}>{error}</Text> : <View style={{ flex: 1 }} />}
+        {maxLength ? <Text style={typo.micro}>{value.length}/{maxLength}</Text> : null}
+      </View>
+    </View>
+  );
+}
 
 export default function Post({ onDone, onLogin }: { onDone: (id: string) => void; onLogin: () => void }) {
   const [title, setTitle] = useState('');
@@ -27,8 +61,14 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
 
   if (gated) {
     return (
-      <View>
-        <EmptyState message="Log in to post a jam." actionLabel="Go to Login →" onAction={onLogin} />
+      <View style={styles.gutter}>
+        <EmptyState
+          title="Log in to host"
+          message="A jam needs an owner, so posting needs an account. One email link gets you in and back here."
+          actionLabel="Go to login"
+          onAction={onLogin}
+          seed="jamlink-locked-door-neon"
+        />
       </View>
     );
   }
@@ -62,37 +102,74 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
   }
 
   return (
-    <ScrollView style={{ flex: 1 }}>
-      <Text style={styles.label}>Title</Text>
-      <TextInput value={title} onChangeText={setTitle} maxLength={TITLE_MAX} placeholder="Late night lofi session"
-        onBlur={() => setTouched((t) => ({ ...t, title: true }))}
-        placeholderTextColor={colors.muted} style={styles.input} />
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        {showTitleErr ? <Text style={styles.error}>{titleErr}</Text> : <Text />}
-        <Text style={styles.muted}>{title.length}/{TITLE_MAX}</Text>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled">
+      <Cover seed="jamlink-mixing-desk-dark" height={180}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
+          <Reveal>
+            <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
+              Open your room
+            </Text>
+          </Reveal>
+        </View>
+      </Cover>
+
+      <View style={styles.gutter}>
+        <Reveal delay={90}>
+          <Text style={[typo.muted, { marginTop: spacing.lg }]}>
+            Start the jam in Spotify, copy the invite link, and drop it here. Everyone who joins listens on your queue.
+          </Text>
+        </Reveal>
+
+        <Field
+          label="Title"
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Late night lofi session"
+          maxLength={TITLE_MAX}
+          sentences
+          error={showTitleErr}
+          onBlur={() => setTouched((t) => ({ ...t, title: true }))}
+        />
+        <Field
+          label="Spotify jam link"
+          value={url}
+          onChangeText={setUrl}
+          placeholder="https://open.spotify.com/jam/..."
+          error={showUrlErr}
+          keyboardType="url"
+          onBlur={() => setTouched((t) => ({ ...t, url: true }))}
+        />
+        <Field
+          label="Description, optional"
+          value={description}
+          onChangeText={setDescription}
+          placeholder="What are we listening to?"
+          maxLength={DESC_MAX}
+          multiline
+          sentences
+        />
+
+        <View style={{ marginTop: spacing.xxl }}>
+          <Eyebrow>Genre</Eyebrow>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.md }}>
+            {GENRES.map((g) => {
+              const on = genre === g;
+              return (
+                <Press
+                  key={g}
+                  onPress={() => setGenre(g)}
+                  accessibilityLabel={`Genre ${g}`}
+                  style={[styles.chip, { marginBottom: spacing.sm }, on && styles.chipOn]}>
+                  <Text style={on ? styles.chipTextOn : styles.chipText}>{g}</Text>
+                </Press>
+              );
+            })}
+          </View>
+        </View>
+
+        <ErrorBanner message={err} />
+        <Solid label={sending ? 'Posting...' : 'Post jam'} onPress={submit} disabled={sending} style={{ marginTop: spacing.xl }} />
       </View>
-      <Text style={styles.label}>Spotify Jam link</Text>
-      <TextInput value={url} onChangeText={setUrl} autoCapitalize="none" autoCorrect={false}
-        onBlur={() => setTouched((t) => ({ ...t, url: true }))}
-        placeholder="https://open.spotify.com/jam/..." placeholderTextColor={colors.muted} style={styles.input} />
-      {showUrlErr ? <Text style={styles.error}>{urlErr}</Text> : null}
-      <Text style={styles.label}>Description (optional)</Text>
-      <TextInput value={description} onChangeText={setDescription} maxLength={DESC_MAX} multiline
-        placeholder="What are we listening to?" placeholderTextColor={colors.muted} style={[styles.input, { minHeight: 64 }]} />
-      <Text style={[styles.muted, { textAlign: 'right' }]}>{description.length}/{DESC_MAX}</Text>
-      <Text style={styles.label}>Genre</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.sm }}>
-        {GENRES.map((g) => (
-          <TouchableOpacity key={g} onPress={() => setGenre(g)}
-            style={[styles.chip, { marginBottom: spacing.sm }, genre === g && { backgroundColor: colors.accent }]}>
-            <Text style={{ color: genre === g ? colors.accentText : colors.text }}>{g}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      <ErrorBanner message={err} />
-      <TouchableOpacity onPress={submit} disabled={sending} style={[styles.bigButton, sending && { opacity: 0.6 }]}>
-        <Text style={styles.bigButtonText}>{sending ? 'Posting...' : 'Post jam'}</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }

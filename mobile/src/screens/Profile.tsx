@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { seedFor } from '../lib/layout';
 import { isConfigured, supabase, type Jam } from '../lib/supabase';
-import { colors, spacing, styles, timeAgo } from '../theme';
-import { EmptyState, ErrorBanner, SkeletonRow } from '../ui';
+import { colors, gutter, spacing, styles, timeAgo, typo } from '../theme';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, JamRow, Press, Reveal, SectionHead, SkeletonRow } from '../ui';
+
+const GAP = 10;
+const STAT_W = (Dimensions.get('window').width - gutter * 2 - GAP * 2) / 3;
 
 export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: string) => void; onLogin: () => void; onPost: () => void }) {
   const [userId, setUserId] = useState<string | null>(null);
@@ -90,106 +94,148 @@ export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: stri
     else { setUserId(null); setHosted([]); setJoined([]); }
   }
 
-  if (!isConfigured) return <EmptyState message="Set EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY to browse jams." />;
+  if (!isConfigured) {
+    return (
+      <View style={styles.gutter}>
+        <EmptyState
+          title="Not wired up yet"
+          message="Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY, then reopen the app to browse jams."
+          seed="jamlink-offline-static"
+        />
+      </View>
+    );
+  }
 
-  if (loading) return <View style={{ marginTop: spacing.md }}>{[0, 1, 2].map((i) => <SkeletonRow key={i} />)}</View>;
+  if (loading) return <View style={[styles.gutter, { marginTop: spacing.lg }]}>{[0, 1, 2].map((i) => <SkeletonRow key={i} />)}</View>;
 
   if (!userId) {
     return (
-      <View>
+      <View style={styles.gutter}>
         <ErrorBanner message={err} />
-        <EmptyState message="Log in to see the jams you host and joined." actionLabel="Go to Login →" onAction={onLogin} />
+        <EmptyState
+          title="Nothing here yet"
+          message="Log in to see the jams you host and the ones you joined. One email link does both."
+          actionLabel="Go to login"
+          onAction={onLogin}
+          seed="jamlink-empty-headphones"
+        />
       </View>
     );
   }
 
   const totalMembers = hosted.reduce((n, j) => n + j.member_count, 0);
+  const stats = [
+    { label: 'Hosted', value: hosted.length },
+    { label: 'Joined', value: joined.length },
+    { label: 'Listeners', value: totalMembers },
+  ];
 
   return (
-    <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.accent} />}>
-      <ErrorBanner message={err} />
-      <View style={[styles.row, { marginTop: spacing.md }]}>
-        {[
-          { label: 'Hosted', value: hosted.length },
-          { label: 'Joined', value: joined.length },
-          { label: 'Members', value: totalMembers },
-        ].map((s) => (
-          <View key={s.label} style={styles.stat}>
-            <Text style={styles.statValue}>{s.value}</Text>
-            <Text style={styles.muted}>{s.label}</Text>
-          </View>
-        ))}
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: spacing.section }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.accent} />}>
+
+      <Cover seed={seedFor('profile', userId)} height={170}>
+        <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
+          <Reveal>
+            <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
+              Your rooms
+            </Text>
+          </Reveal>
+        </View>
+      </Cover>
+
+      <View style={styles.gutter}>
+        <ErrorBanner message={err} />
+
+        {/* three tiles, three equal columns, one full row: no dead cell possible */}
+        <Reveal delay={80} style={[styles.row, { marginTop: spacing.xl }]}>
+          {stats.map((s, i) => (
+            <View key={s.label} style={[styles.card, { width: STAT_W, marginRight: i === stats.length - 1 ? 0 : GAP, padding: spacing.lg }]}>
+              <Text style={[typo.h1, { color: colors.accent }]}>{s.value}</Text>
+              <Text style={[typo.eyebrow, { marginTop: spacing.xs }]}>{s.label.toUpperCase()}</Text>
+            </View>
+          ))}
+        </Reveal>
+
+        <SectionHead title="Hosting" meta={hosted.length ? `${hosted.length} total` : undefined} top={spacing.section} />
+        {hosted.length === 0 ? (
+          <EmptyState
+            message="You have not posted a jam yet. The room only exists once someone opens it."
+            actionLabel="Post a jam"
+            onAction={onPost}
+          />
+        ) : (
+          hosted.map((j, i) => {
+            const key = `${j.is_open ? 'close_jam' : 'reopen_jam'}:${j.id}`;
+            const pending = busy === key;
+            return (
+              <JamRow
+                key={j.id}
+                seed={seedFor(j.genre, j.id)}
+                title={j.title}
+                meta={`${j.is_open ? 'Open' : 'Closed'} · ${j.member_count} listening · ${timeAgo(j.created_at)}`}
+                onPress={() => onOpen(j.id)}
+                accessibilityLabel={`Open ${j.title}`}
+                last={i === hosted.length - 1}
+                right={
+                  <Press
+                    onPress={() => toggleOpen(j)}
+                    disabled={pending}
+                    accessibilityLabel={`${j.is_open ? 'Close' : 'Reopen'} ${j.title}`}
+                    style={[styles.small, pending && { opacity: 0.55 }]}>
+                    <Text style={styles.smallText}>{pending ? 'Working' : j.is_open ? 'Close' : 'Reopen'}</Text>
+                  </Press>
+                }
+              />
+            );
+          })
+        )}
+
+        <SectionHead title="Joined" meta={joined.length ? `${joined.length} total` : undefined} top={spacing.section} />
+        {joined.length === 0 ? (
+          <EmptyState
+            message="You have not joined a jam yet. Post one and listeners can join you instead."
+            actionLabel="Post a jam"
+            onAction={onPost}
+          />
+        ) : (
+          joined.map((j, i) => {
+            const pending = busy === `leave:${j.id}`;
+            return (
+              <JamRow
+                key={j.id}
+                seed={seedFor(j.genre, j.id)}
+                title={j.title}
+                meta={`${j.genre} · ${j.member_count} listening`}
+                onPress={() => onOpen(j.id)}
+                accessibilityLabel={`Open ${j.title}`}
+                last={i === joined.length - 1}
+                right={
+                  <Press
+                    onPress={() => leave(j)}
+                    disabled={pending}
+                    accessibilityLabel={`Leave ${j.title}`}
+                    style={[styles.small, pending && { opacity: 0.55 }]}>
+                    <Text style={styles.smallText}>{pending ? 'Working' : 'Leave'}</Text>
+                  </Press>
+                }
+              />
+            );
+          })
+        )}
+
+        <View style={{ marginTop: spacing.section }}>
+          <Eyebrow>Account</Eyebrow>
+          <Ghost
+            label={busy === 'signout' ? 'Signing out' : 'Sign out'}
+            onPress={signOut}
+            disabled={busy === 'signout'}
+            style={{ marginTop: spacing.md }}
+          />
+        </View>
       </View>
-
-      <Text style={styles.sectionTitle}>Hosting</Text>
-      {hosted.length === 0 ? (
-        <EmptyState message="You have not posted a jam yet." actionLabel="Post a jam" onAction={onPost} />
-      ) : (
-        hosted.map((j) => {
-          const key = `${j.is_open ? 'close_jam' : 'reopen_jam'}:${j.id}`;
-          const pending = busy === key;
-          return (
-            <View key={j.id} style={[styles.card, styles.rowBetween]}>
-              <TouchableOpacity
-                onPress={() => onOpen(j.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${j.title}`}
-                style={{ flex: 1, paddingRight: spacing.sm }}>
-                <Text style={{ color: colors.text, fontWeight: 'bold' }}>{j.title}</Text>
-                <Text style={styles.muted}>{j.is_open ? 'Open' : 'Closed'} · {j.member_count} members · {timeAgo(j.created_at)}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => toggleOpen(j)}
-                disabled={pending}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: pending }}
-                accessibilityLabel={`${j.is_open ? 'Close' : 'Reopen'} ${j.title}`}
-                style={[styles.smallButton, pending && { opacity: 0.6 }]}>
-                <Text style={styles.smallButtonText}>{pending ? 'Working…' : j.is_open ? 'Close' : 'Reopen'}</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })
-      )}
-
-      <Text style={styles.sectionTitle}>Joined</Text>
-      {joined.length === 0 ? (
-        <EmptyState message="You have not joined a jam yet. Post one and listeners can join you." actionLabel="Post a jam" onAction={onPost} />
-      ) : (
-        joined.map((j) => {
-          const pending = busy === `leave:${j.id}`;
-          return (
-            <View key={j.id} style={[styles.card, styles.rowBetween]}>
-              <TouchableOpacity
-                onPress={() => onOpen(j.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Open ${j.title}`}
-                style={{ flex: 1, paddingRight: spacing.sm }}>
-                <Text style={{ color: colors.text, fontWeight: 'bold' }}>{j.title}</Text>
-                <Text style={styles.muted}>{j.genre} · {j.member_count} members</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => leave(j)}
-                disabled={pending}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: pending }}
-                accessibilityLabel={`Leave ${j.title}`}
-                style={[styles.smallButton, pending && { opacity: 0.6 }]}>
-                <Text style={styles.smallButtonText}>{pending ? 'Working…' : 'Leave'}</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })
-      )}
-
-      <TouchableOpacity
-        onPress={signOut}
-        disabled={busy === 'signout'}
-        accessibilityRole="button"
-        accessibilityLabel="Sign out"
-        style={[styles.bigButton, { backgroundColor: colors.card, marginTop: spacing.xl }, busy === 'signout' && { opacity: 0.6 }]}>
-        <Text style={[styles.bigButtonText, { color: colors.text }]}>{busy === 'signout' ? 'Signing out…' : 'Sign out'}</Text>
-      </TouchableOpacity>
     </ScrollView>
   );
 }
