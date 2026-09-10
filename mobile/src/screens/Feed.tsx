@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Dimensions, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, Animated, Dimensions, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { bentoRows, seedFor } from '../lib/layout';
 import { GENRES } from '../lib/spotify';
 import { isConfigured, supabase, type Jam } from '../lib/supabase';
 import { rankTrending } from '../lib/trending';
 import { colors, gutter, radius, spacing, styles, timeAgo, typo } from '../theme';
-import { Cover, EmptyState, ErrorBanner, Ghost, JamRow, Marquee, Press, Reveal, SectionHead, SkeletonBlock, SkeletonRow, Solid } from '../ui';
+import { Cover, EmptyState, ErrorBanner, Ghost, JamRow, Marquee, Press, Reveal, SectionHead, SkeletonBlock, SkeletonRow, Solid, useParallax } from '../ui';
 
 const { width: W, height: H } = Dimensions.get('window');
 const GAP = 10;
@@ -19,6 +19,7 @@ export default function Feed({ onOpen, onRandom, onPost }: { onOpen: (id: string
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { scrollY, scrollProps } = useParallax();
 
   const load = useCallback(async (refresh = false) => {
     const sb = supabase();
@@ -67,13 +68,14 @@ export default function Feed({ onOpen, onRandom, onPost }: { onOpen: (id: string
 
   return (
     // ponytail: one ScrollView owns pull-to-refresh; cards are .map (max 50 rows, no FlatList needed)
-    <ScrollView
+    <Animated.ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: spacing.section }}
+      {...scrollProps}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.accent} />}>
 
       {/* Attention: full bleed cinematic hero, headline capped at two lines, exactly two calls to action */}
-      <Cover seed="jamlink-night-crowd-sound" height={HERO_H}>
+      <Cover seed="jamlink-night-crowd-sound" height={HERO_H} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.xl }}>
           <Reveal>
             <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -201,6 +203,6 @@ export default function Feed({ onOpen, onRandom, onPost }: { onOpen: (id: string
           </View>
         </Cover>
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }

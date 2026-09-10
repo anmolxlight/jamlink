@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Animated, Linking, Text, View } from 'react-native';
 import { seedFor } from '../lib/layout';
 import { supabase, type Jam } from '../lib/supabase';
 import { colors, gutter, radius, spacing, styles, timeAgo, typo } from '../theme';
-import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, Reveal, SkeletonBlock, SkeletonRow, Solid } from '../ui';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, Reveal, SkeletonBlock, SkeletonRow, Solid, useParallax } from '../ui';
 
 type Member = { user_id: string; joined_at: string };
 
@@ -32,6 +32,7 @@ export default function JamDetail({ id }: { id: string }) {
   // ponytail: one flag, so a success line never renders inside the error banner
   const [ok, setOk] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { scrollY, scrollProps } = useParallax();
 
   useEffect(() => {
     (async () => {
@@ -100,8 +101,8 @@ export default function JamDetail({ id }: { id: string }) {
   }
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }}>
-      <Cover seed={seedFor(jam.genre, jam.id)} height={300} dim={0.34}>
+    <Animated.ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} {...scrollProps}>
+      <Cover seed={seedFor(jam.genre, jam.id)} height={300} dim={0.34} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.xl }}>
           <Reveal>
             <Eyebrow>{`${jam.genre}  ${jam.is_open ? 'open' : 'closed'}`}</Eyebrow>
@@ -167,6 +168,6 @@ export default function JamDetail({ id }: { id: string }) {
           )}
         </View>
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }

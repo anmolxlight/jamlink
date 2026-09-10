@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Animated, Text, TextInput, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { colors, gutter, spacing, styles, typo } from '../theme';
-import { Cover, ErrorBanner, Eyebrow, Ghost, Reveal, Solid } from '../ui';
+import { Cover, ErrorBanner, Eyebrow, Ghost, Reveal, Solid, useParallax } from '../ui';
 
 type State = 'idle' | 'sending' | 'sent' | 'error';
 
@@ -11,6 +11,7 @@ export default function Login({ onDone }: { onDone: () => void }) {
   const [focused, setFocused] = useState(false);
   const [state, setState] = useState<State>('idle');
   const [err, setErr] = useState('');
+  const { scrollY, scrollProps } = useParallax();
 
   async function send() {
     const sb = supabase();
@@ -26,9 +27,9 @@ export default function Login({ onDone }: { onDone: () => void }) {
   const label = state === 'sending' ? 'Sending' : state === 'sent' ? 'Resend link' : 'Send magic link';
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled">
+    <Animated.ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled" {...scrollProps}>
       {/* cinematic centre: one picture, one headline, one thing to do */}
-      <Cover seed="jamlink-late-night-radio-glow" height={260} dim={0.42}>
+      <Cover seed="jamlink-late-night-radio-glow" height={260} dim={0.42} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingHorizontal: gutter, paddingBottom: spacing.xl }}>
           <Reveal>
             <Text style={[typo.display, { textAlign: 'center' }]} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -84,6 +85,6 @@ export default function Login({ onDone }: { onDone: () => void }) {
           back and pull to refresh.
         </Text>
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }

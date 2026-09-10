@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, View } from 'react-native';
+import { Animated, Text, TextInput, View } from 'react-native';
 import { seedFor } from '../lib/layout';
 import { isConfigured, supabase, type Jam } from '../lib/supabase';
 import { colors, gutter, spacing, styles, timeAgo, typo } from '../theme';
-import { Cover, EmptyState, ErrorBanner, JamRow, Reveal, SkeletonRow } from '../ui';
+import { Cover, EmptyState, ErrorBanner, JamRow, Reveal, SkeletonRow, useParallax } from '../ui';
 
 export default function Search({ onOpen, onPost }: { onOpen: (id: string) => void; onPost: () => void }) {
   const [term, setTerm] = useState('');
@@ -11,6 +11,7 @@ export default function Search({ onOpen, onPost }: { onOpen: (id: string) => voi
   const [results, setResults] = useState<Jam[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const { scrollY, scrollProps } = useParallax();
 
   const q = term.trim();
 
@@ -46,8 +47,8 @@ export default function Search({ onOpen, onPost }: { onOpen: (id: string) => voi
   }
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled">
-      <Cover seed="jamlink-search-vinyl-wall" height={180}>
+    <Animated.ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled" {...scrollProps}>
+      <Cover seed="jamlink-search-vinyl-wall" height={180} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
           <Reveal>
             <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -110,6 +111,6 @@ export default function Search({ onOpen, onPost }: { onOpen: (id: string) => voi
           </View>
         )}
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
+import { Animated, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { GENRES, isValidJamPost } from '../lib/spotify';
 import { supabase } from '../lib/supabase';
 import { colors, gutter, spacing, styles, typo } from '../theme';
-import { Cover, EmptyState, ErrorBanner, Eyebrow, Press, Reveal, Solid } from '../ui';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Press, Reveal, Solid, useParallax } from '../ui';
 
 const TITLE_MAX = 80;
 const DESC_MAX = 280;
@@ -52,6 +52,7 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
   const [err, setErr] = useState('');
   const [gated, setGated] = useState(false);
   const [sending, setSending] = useState(false);
+  const { scrollY, scrollProps } = useParallax();
 
   useEffect(() => {
     supabase()?.auth.getUser().then(({ data }) => {
@@ -102,8 +103,8 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
   }
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled">
-      <Cover seed="jamlink-mixing-desk-dark" height={180}>
+    <Animated.ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: spacing.section }} keyboardShouldPersistTaps="handled" {...scrollProps}>
+      <Cover seed="jamlink-mixing-desk-dark" height={180} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
           <Reveal>
             <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -170,6 +171,6 @@ export default function Post({ onDone, onLogin }: { onDone: (id: string) => void
         <ErrorBanner message={err} />
         <Solid label={sending ? 'Posting...' : 'Post jam'} onPress={submit} disabled={sending} style={{ marginTop: spacing.xl }} />
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }

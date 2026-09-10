@@ -1,12 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated, Dimensions, Easing, Image, StyleSheet, Text, TouchableOpacity, View,
+  Animated, Dimensions, Easing, StyleSheet, Text, TouchableOpacity, View,
   type StyleProp, type ViewStyle,
 } from 'react-native';
 import { coverUrl } from './lib/layout';
 import { colors, radius, spacing, styles, typo } from './theme';
 
 const SCREEN_W = Dimensions.get('window').width;
+
+// ponytail: both halves of the scroll wiring in one call. Native driver needs an
+// Animated.ScrollView, so screens pair this with one, never a plain ScrollView.
+export function useParallax() {
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollProps = {
+    onScroll: Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true }),
+    scrollEventThrottle: 16,
+  };
+  return { scrollY, scrollProps };
+}
 
 // ponytail: the whole kit lives in one file. No component library, no gradient
 // native module: a stack of flat layers is a gradient the moment you step it finely.
@@ -27,13 +38,24 @@ export function Wash({ steps = 20, from = 0, to = 0.96, color = colors.bg, style
 }
 
 // Seeded grayscale picture under a dark wash. Never a raw stock photo.
-export function Cover({ seed, height, width = SCREEN_W, dim = 0.32, wash = 0.96, washSteps = 18, round, style, children }: {
+// Pass scrollY and the picture scales on overscroll, then drifts and darkens as it
+// leaves. That is the one scroll-linked effect worth its wiring on a phone.
+export function Cover({ seed, height, width = SCREEN_W, dim = 0.32, wash = 0.96, washSteps = 18, round, style, scrollY, children }: {
   seed: string; height: number; width?: number; dim?: number; wash?: number; washSteps?: number;
-  round?: number; style?: StyleProp<ViewStyle>; children?: React.ReactNode;
+  round?: number; style?: StyleProp<ViewStyle>; scrollY?: Animated.Value; children?: React.ReactNode;
 }) {
+  const parallax = scrollY
+    ? {
+        opacity: scrollY.interpolate({ inputRange: [0, height], outputRange: [1, 0.2], extrapolate: 'clamp' as const }),
+        transform: [
+          { translateY: scrollY.interpolate({ inputRange: [0, height], outputRange: [0, height * 0.3], extrapolate: 'clamp' as const }) },
+          { scale: scrollY.interpolate({ inputRange: [-height, 0], outputRange: [1.35, 1], extrapolateRight: 'clamp' as const }) },
+        ],
+      }
+    : undefined;
   return (
     <View style={[{ height, backgroundColor: colors.surface, overflow: 'hidden', borderRadius: round }, style]}>
-      <Image source={{ uri: coverUrl(seed, width * 2, height * 2) }} resizeMode="cover" style={StyleSheet.absoluteFill} />
+      <Animated.Image source={{ uri: coverUrl(seed, width * 2, height * 2) }} resizeMode="cover" style={[StyleSheet.absoluteFill, parallax]} />
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#000000', opacity: dim }]} />
       {/* ponytail: a stepped wash costs one view per step, so list thumbnails pass
           washSteps={0} and settle for the flat scrim above. 50 rows, not 1000 views. */}

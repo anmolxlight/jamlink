@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Dimensions, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, Animated, Dimensions, RefreshControl, Text, View } from 'react-native';
 import { seedFor } from '../lib/layout';
 import { isConfigured, supabase, type Jam } from '../lib/supabase';
 import { colors, gutter, spacing, styles, timeAgo, typo } from '../theme';
-import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, JamRow, Press, Reveal, SectionHead, SkeletonRow } from '../ui';
+import { Cover, EmptyState, ErrorBanner, Eyebrow, Ghost, JamRow, Press, Reveal, SectionHead, SkeletonRow, useParallax } from '../ui';
 
 const GAP = 10;
 const STAT_W = (Dimensions.get('window').width - gutter * 2 - GAP * 2) / 3;
@@ -17,6 +17,7 @@ export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: stri
   const [refreshing, setRefreshing] = useState(false);
   // ponytail: one in-flight key ("close:<id>") is enough, a user taps one row at a time
   const [busy, setBusy] = useState<string | null>(null);
+  const { scrollY, scrollProps } = useParallax();
 
   const load = useCallback(async (refresh = false) => {
     const sb = supabase();
@@ -131,12 +132,13 @@ export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: stri
   ];
 
   return (
-    <ScrollView
+    <Animated.ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ paddingBottom: spacing.section }}
+      {...scrollProps}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.accent} />}>
 
-      <Cover seed={seedFor('profile', userId)} height={170}>
+      <Cover seed={seedFor('profile', userId)} height={170} scrollY={scrollY}>
         <View style={{ flex: 1, justifyContent: 'flex-end', paddingHorizontal: gutter, paddingBottom: spacing.lg }}>
           <Reveal>
             <Text style={typo.display} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7}>
@@ -236,6 +238,6 @@ export default function Profile({ onOpen, onLogin, onPost }: { onOpen: (id: stri
           />
         </View>
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
