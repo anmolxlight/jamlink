@@ -2,7 +2,7 @@
   "expo": {
     "name": "JamLink",
     "slug": "jamlink",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "entryPoint": "./App.tsx",
     "scheme": "jamlink",
     "icon": "./assets/icon.png",
