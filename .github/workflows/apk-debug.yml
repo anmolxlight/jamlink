@@ -3,7 +3,7 @@ on:
   workflow_dispatch: {}
 jobs:
   emu:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -14,6 +14,8 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
+          emulator-options: -no-snapshot -no-audio -no-boot-anim -gpu swiftshader_indirect
+          disable-animations: true
           script: |
             adb install /tmp/apkdir/app-release.apk
             adb shell am start -n com.jamlink.app/.MainActivity
