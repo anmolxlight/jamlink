@@ -134,7 +134,7 @@ export function Marquee({ words, duration = 26000 }: { words: readonly string[];
     <View style={styles.row} onLayout={measured ? (e) => setW(e.nativeEvent.layout.width) : undefined}>
       {words.map((word) => (
         <View key={word} style={styles.row}>
-          <Text style={[typo.h2, { color: colors.raised }]}>{word.toUpperCase()}</Text>
+          <Text style={[typo.h2, { color: colors.lineStrong }]}>{word.toUpperCase()}</Text>
           <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: colors.accent, marginHorizontal: spacing.md, opacity: 0.6 }} />
         </View>
       ))}

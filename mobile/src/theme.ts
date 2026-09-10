@@ -9,8 +9,10 @@ export const colors = {
   line: '#1f1f1f',
   lineStrong: '#2e2e2e',
   text: '#f2f2f2',
-  muted: '#8f8f8f',
-  dim: '#5a5a5a',
+  // ponytail: both grays are picked to clear 4.5:1 on the locked #0a0a0a canvas
+  // (muted 7.1:1, dim 4.6:1). Anything dimmer looked better and failed AA.
+  muted: '#a0a0a0',
+  dim: '#7e7e7e',
   accent: '#1DB954',
   accentInk: '#05130a', // near-black on accent fills, never white on green
   // status only, never used as an accent or a decoration
@@ -56,7 +58,7 @@ export const styles = StyleSheet.create({
   small: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong },
   smallText: { color: colors.text, fontWeight: '700', fontSize: 13 },
 
-  chip: { paddingHorizontal: spacing.lg, minHeight: 40, justifyContent: 'center', borderRadius: radius.pill, marginRight: spacing.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
+  chip: { paddingHorizontal: spacing.lg, minHeight: 44, justifyContent: 'center', borderRadius: radius.pill, marginRight: spacing.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.card },
   chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText: { color: colors.text, fontSize: 13, fontWeight: '600' },
   chipTextOn: { color: colors.accentInk, fontSize: 13, fontWeight: '800' },
@@ -72,7 +74,7 @@ export const styles = StyleSheet.create({
   // minimal split nav: wordmark left, one control right
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: gutter, paddingTop: spacing.sm, paddingBottom: spacing.md },
   navDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.accent, marginRight: spacing.sm },
-  backPill: { flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong },
+  backPill: { flexDirection: 'row', alignItems: 'center', minHeight: 44, paddingHorizontal: spacing.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.lineStrong },
   backText: { color: colors.text, fontSize: 13, fontWeight: '700' },
 
   // floating glass pill tab bar, in flow so nothing overlaps the scroll
