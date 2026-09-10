@@ -1,16 +1,17 @@
 import Constants from 'expo-constants';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-function env(key: string): string {
-  return (
-    (Constants.expoConfig?.extra?.[key] as string) ??
-    (process.env[key] as string) ??
-    ''
-  );
-}
-
-export const SUPABASE_URL = env('EXPO_PUBLIC_SUPABASE_URL');
-export const SUPABASE_ANON_KEY = env('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+// ponytail: static member access ONLY. Metro inlines process.env.EXPO_PUBLIC_*
+// at bundle time; dynamic process.env[key] survives as undefined and crashes
+// the release app at import. Every env read in this file must stay literal.
+export const SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ??
+  (Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL as string) ??
+  '';
+export const SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+  (Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY as string) ??
+  '';
 export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 let client: SupabaseClient | null = null;
