@@ -18,7 +18,8 @@ export function Wash({ steps = 20, from = 0, to = 0.96, color = colors.bg, style
       {Array.from({ length: steps }, (_, i) => (
         <View
           key={i}
-          style={{ flex: 1, backgroundColor: color, opacity: from + (to - from) * Math.pow(i / (steps - 1), 1.8) }}
+          // Math.max keeps a single-step wash from dividing by zero into a NaN opacity
+          style={{ flex: 1, backgroundColor: color, opacity: from + (to - from) * Math.pow(i / Math.max(1, steps - 1), 1.8) }}
         />
       ))}
     </View>
