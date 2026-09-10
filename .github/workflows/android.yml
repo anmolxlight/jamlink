@@ -16,6 +16,9 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - uses: android-actions/setup-android@v3
       - run: npm ci
+      # ponytail: fails the build if the JS entry stops registering the root component
+      # (the v0.1.2-v0.1.6 instant-close bug). Costs a second, saves a release.
+      - run: node test-entry.js
       - run: npx expo prebuild --platform android --non-interactive
       - run: printf '\norg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8\nkotlin.daemon.jvmargs=-Xmx4g\norg.gradle.workers.max=2\nkotlin.compiler.execution.strategy=in-process\nbundleInDebug=true\n' >> android/gradle.properties
       - run: yes | sdkmanager --licenses
