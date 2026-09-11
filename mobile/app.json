@@ -3,7 +3,7 @@
     "name": "JamLink",
     "slug": "jamlink",
     "version": "0.2.0",
-    "runtimeVersion": { "policy": "appVersion" },
+    "runtimeVersion": "0.2.0",
     "updates": {
       "url": "https://u.expo.dev/6fb6faa8-609e-439d-a3a9-33e00f6d854c",
       "enabled": true,
