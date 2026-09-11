@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -17,7 +18,18 @@ export const isConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 let client: SupabaseClient | null = null;
 export function supabase(): SupabaseClient | null {
   if (!isConfigured) return null; // ponytail: graceful empty-state, no throw
-  if (!client) client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (!client) {
+    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        // ponytail: without a storage adapter supabase-js falls back to memory
+        // on RN — session dies on every app restart.
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false, // no URL to read a session from in RN
+      },
+    });
+  }
   return client;
 }
 
